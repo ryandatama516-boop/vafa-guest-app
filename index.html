@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Manajemen Tamu - Penginapan Va-Fa</title>
+
+  <!-- PWA & Ikon Aplikasi Sesuai Spesifikasi File Logo -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#B83B5E">
+  <link rel="icon" type="image/png" sizes="192x192" href="vafa-logo-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="vafa-logo-512.png">
+  <link rel="apple-touch-icon" sizes="1024x1024" href="vafa-logo-1024.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            vafa: {
+              bg: '#FDF2F4',
+              primary: '#B83B5E',
+              primaryDark: '#962D4B',
+              green: '#558B48',
+              accent: '#F4ACB7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-vafa-bg min-h-screen py-8 px-4 text-slate-800">
+
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-pink-100">
+    
+    <!-- Header dengan Logo Resmi Va-Fa -->
+    <div class="bg-gradient-to-r from-vafa-primary to-vafa-primaryDark text-white px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <img src="vafa-logo-1024.png" alt="Logo Penginapan Va-Fa" 
+             onerror="this.src='vafa-logo-512.png'"
+             class="w-16 h-16 rounded-2xl bg-white p-1 shadow-md object-contain">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Penginapan Va-Fa</h1>
+          <p class="text-pink-100 text-sm">Sistem Reservasi Multi-Kamar & Manajemen Tamu</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="bg-white/20 backdrop-blur-sm text-xs font-semibold px-3.5 py-1.5 rounded-full border border-white/30">
+          v2.0 Group & Nightly Sync
+        </span>
+      </div>
+    </div>
+
+    <!-- Form Utama -->
+    <form id="guestForm" class="p-6 space-y-8">
+      
+      <!-- 1. Identitas Pemesan / Ketua Rombongan -->
+      <section>
+        <div class="flex items-center justify-between border-b border-pink-100 pb-2 mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-vafa-primary">1. Identitas Pemesan / Penanggung Jawab</h2>
+          <span class="text-xs text-slate-500">1 Pemesan bisa memesan banyak kamar</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap (Sesuai KTP/Paspor)</label>
+            <input type="text" id="namaLengkap" required placeholder="Contoh: Ahmad Fauzi"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Nomor Telepon / WhatsApp Aktif</label>
+            <input type="tel" id="noTelepon" required placeholder="Contoh: 081234567890"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Jadwal Menginap -->
+      <section>
+        <div class="flex items-center justify-between border-b border-pink-100 pb-2 mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-vafa-primary">2. Jadwal Menginap</h2>
+          <span id="badgeDurasi" class="text-xs font-bold bg-pink-100 text-vafa-primary px-2.5 py-1 rounded-full">Durasi: 1 Malam</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal Check-In</label>
+            <input type="date" id="checkIn" required onchange="ubahDurasiMalam()"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal Check-Out</label>
+            <input type="date" id="checkOut" required onchange="ubahDurasiMalam()"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Daftar Kamar & Layanan Tambahan Per Malam -->
+      <section>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-pink-100 pb-2 mb-4 gap-2">
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-vafa-primary">3. Daftar Kamar & Layanan Tambahan</h2>
+            <p class="text-xs text-slate-500">Bisa tambah banyak kamar untuk anggota & atur Extra Bed / Makan berbeda tiap malam</p>
+          </div>
+          <button type="button" onclick="tambahKamar()"
+            class="inline-flex items-center gap-1.5 bg-vafa-green hover:bg-green-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition">
+            + Tambah Kamar Lain
+          </button>
+        </div>
+
+        <!-- Container Dinamis Kamar -->
+        <div id="roomsContainer" class="space-y-4"></div>
+      </section>
+
+      <!-- 4. Status & Pembayaran (Termasuk Kalkulator DP) -->
+      <section>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-vafa-primary border-b border-pink-100 pb-2 mb-4">4. Status & Pembayaran</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Metode Pembayaran</label>
+            <select id="metodePembayaran" required
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+              <option value="Tunai">Tunai</option>
+              <option value="Transfer">Transfer Bank</option>
+              <option value="QRIS">QRIS</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Status Pembayaran</label>
+            <select id="statusPembayaran" required onchange="toggleKolomDP()"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+              <option value="Lunas">Lunas (Hijau)</option>
+              <option value="DP">DP / Uang Muka (Kuning)</option>
+              <option value="Belum Bayar">Belum Bayar (Merah)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Kategori Status Tamu</label>
+            <select id="statusTamu" required
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+              <option value="In-House">In-House (Sedang Menginap)</option>
+              <option value="Reservation">Reservation (Akan Datang)</option>
+              <option value="Checked-Out">Checked-Out (Selesai)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Input Nominal DP (Muncul Otomatis Jika Pilih Status = DP) -->
+        <div id="boxNominalDP" class="hidden mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+          <div>
+            <label class="block text-sm font-semibold text-amber-900 mb-1">Nominal DP yang Dibayarkan (Rp)</label>
+            <input type="number" id="nominalDP" min="0" value="0" oninput="hitungEstimasi()" placeholder="Contoh: 150000"
+              class="w-full rounded-xl border border-amber-300 px-3.5 py-2 text-sm bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div class="text-sm text-amber-900 md:text-right">
+            <p class="text-xs uppercase font-semibold text-amber-700">Sisa Tagihan Belum Lunas</p>
+            <p id="infoSisaTagihan" class="text-xl font-bold text-rose-700">Rp0</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel Ringkasan Tagihan Keseluruhan -->
+      <div class="bg-pink-50/80 border border-pink-200 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="text-sm text-slate-700 space-y-1">
+          <p>Jumlah Kamar Dipesan: <span id="infoJmlKamar" class="font-bold text-vafa-primary">1 Kamar</span> (<span id="infoDurasi">1 Malam</span>)</p>
+          <p>Total Biaya Kamar: <span id="infoTotalKamar" class="font-semibold">Rp220.000</span></p>
+          <p>Total Layanan Tambahan (Akumulasi Semua Malam): <span id="infoTambahan" class="font-semibold">Rp0</span></p>
+        </div>
+        <div class="md:text-right w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-pink-200">
+          <p class="text-xs uppercase font-bold tracking-wider text-vafa-primary">Total Tagihan Keseluruhan</p>
+          <p id="infoTotal" class="text-3xl font-extrabold text-vafa-primaryDark">Rp220.000</p>
+        </div>
+      </div>
+
+      <!-- Tombol Submit -->
+      <button type="submit" id="submitBtn"
+        class="w-full bg-vafa-primary hover:bg-vafa-primaryDark text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition duration-200">
+        Simpan Data ke Google Sheets
+      </button>
+
+      <div id="notif" class="hidden text-center p-3.5 rounded-xl text-sm font-medium"></div>
+    </form>
+  </div>
+
+  <script>
+    // GANTI DENGAN URL WEB APP APPS SCRIPT KAMU
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxal-hIT3nWUQ4mfhasCoW5TyqCzqMxfkdML7u4l79IVT9REvnbcT6CBslSMZowc6pd/exec";
+
+    let roomCounter = 0;
+
+    function formatRupiah(angka) {
+      return "Rp" + Number(angka).toLocaleString("id-ID");
+    }
+
+    function getDurasiMalam() {
+      const checkInVal = document.getElementById("checkIn").value;
+      const checkOutVal = document.getElementById("checkOut").value;
+      if (checkInVal && checkOutVal) {
+        const d1 = new Date(checkInVal);
+        const d2 = new Date(checkOutVal);
+        const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+        return diff > 0 ? diff : 1;
+      }
+      return 1;
+    }
+
+    function tambahKamar() {
+      roomCounter++;
+      const container = document.getElementById("roomsContainer");
+      const card = document.createElement("div");
+      card.className = "room-card bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4 relative";
+      card.dataset.roomId = roomCounter;
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <span class="font-bold text-sm text-vafa-primaryDark">Kamar #<span class="room-index"></span></span>
+          <button type="button" onclick="hapusKamar(this)" class="btn-remove text-xs text-rose-600 hover:underline font-medium">
+            Hapus Kamar
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nomor Kamar & Penghuni (Opsional)</label>
+            <input type="text" required placeholder="Contoh: 101 (Keluarga Budi)"
+              class="room-number w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tipe Kamar</label>
+            <select onchange="hitungEstimasi()"
+              class="room-type w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-vafa-primary focus:outline-none">
+              <option value="Executive Chill" data-price="220000">Executive Chill (AC - Tanpa Makan) — Rp220.000</option>
+              <option value="Executive Dine" data-price="250000">Executive Dine (AC + Makan) — Rp250.000</option>
+              <option value="Cozy Breeze" data-price="110000">Cozy Breeze (Kipas - Tanpa Makan) — Rp110.000</option>
+              <option value="Cozy Dine" data-price="125000">Cozy Dine (Kipas + Makan) — Rp125.000</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pengaturan Layanan Tambahan Per Malam -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-700">Layanan Tambahan per Malam (Kamar Ini)</span>
+            <span class="text-[11px] text-slate-500">Extra Bed: Rp30rb/mlm | Makan: Rp20rb/porsi</span>
+          </div>
+          <div class="nightly-container space-y-2"></div>
+        </div>
+      `;
+
+      container.appendChild(card);
+      perbaruiNomorUrutKamar();
+      renderBarisMalamUntukKamar(card);
+      hitungEstimasi();
+    }
+
+    function hapusKamar(btn) {
+      const cards = document.querySelectorAll(".room-card");
+      if (cards.length <= 1) return;
+      btn.closest(".room-card").remove();
+      perbaruiNomorUrutKamar();
+      hitungEstimasi();
+    }
+
+    function perbaruiNomorUrutKamar() {
+      const cards = document.querySelectorAll(".room-card");
+      cards.forEach((card, idx) => {
+        card.querySelector(".room-index").innerText = idx + 1;
+        const removeBtn = card.querySelector(".btn-remove");
+        removeBtn.style.display = cards.length === 1 ? "none" : "inline";
+      });
+    }
+
+    function renderBarisMalamUntukKamar(card) {
+      const durasi = getDurasiMalam();
+      const nightlyBox = card.querySelector(".nightly-container");
+
+      // Simpan nilai sebelumnya agar tidak hilang saat tanggal diubah
+      const prevBeds = Array.from(nightlyBox.querySelectorAll(".night-bed")).map(el => el.value);
+      const prevMeals = Array.from(nightlyBox.querySelectorAll(".night-meal")).map(el => el.value);
+
+      nightlyBox.innerHTML = "";
+      for (let m = 1; m <= durasi; m++) {
+        const bedVal = prevBeds[m - 1] !== undefined ? prevBeds[m - 1] : 0;
+        const mealVal = prevMeals[m - 1] !== undefined ? prevMeals[m - 1] : 0;
+
+        const row = document.createElement("div");
+        row.className = "grid grid-cols-3 gap-2 items-center text-xs bg-slate-50 px-3 py-1.5 rounded-lg";
+        row.innerHTML = `
+          <span class="font-semibold text-slate-700">Malam ke-${m}</span>
+          <div class="flex items-center gap-1.5">
+            <label class="text-slate-500">Extra Bed:</label>
+            <input type="number" min="0" value="${bedVal}" oninput="hitungEstimasi()"
+              class="night-bed w-16 rounded border border-slate-300 px-2 py-1 text-center bg-white">
+          </div>
+          <div class="flex items-center gap-1.5">
+            <label class="text-slate-500">Makan:</label>
+            <input type="number" min="0" value="${mealVal}" oninput="hitungEstimasi()"
+              class="night-meal w-16 rounded border border-slate-300 px-2 py-1 text-center bg-white">
+          </div>
+        `;
+        nightlyBox.appendChild(row);
+      }
+    }
+
+    function ubahDurasiMalam() {
+      const durasi = getDurasiMalam();
+      document.getElementById("badgeDurasi").innerText = `Durasi: ${durasi} Malam`;
+      document.querySelectorAll(".room-card").forEach(card => renderBarisMalamUntukKamar(card));
+      hitungEstimasi();
+    }
+
+    function toggleKolomDP() {
+      const status = document.getElementById("statusPembayaran").value;
+      const boxDP = document.getElementById("boxNominalDP");
+      if (status === "DP") {
+        boxDP.classList.remove("hidden");
+      } else {
+        boxDP.classList.add("hidden");
+        document.getElementById("nominalDP").value = 0;
+      }
+      hitungEstimasi();
+    }
+
+    function hitungEstimasi() {
+      const durasi = getDurasiMalam();
+      const cards = document.querySelectorAll(".room-card");
+
+      let totalBiayaKamar = 0;
+      let totalBiayaTambahan = 0;
+
+      cards.forEach(card => {
+        const select = card.querySelector(".room-type");
+        const hargaKamar = Number(select.options[select.selectedIndex].dataset.price) || 0;
+        totalBiayaKamar += hargaKamar * durasi;
+
+        let bedCount = 0;
+        let mealCount = 0;
+        card.querySelectorAll(".night-bed").forEach(inp => bedCount += Number(inp.value) || 0);
+        card.querySelectorAll(".night-meal").forEach(inp => mealCount += Number(inp.value) || 0);
+
+        totalBiayaTambahan += (bedCount * 30000) + (mealCount * 20000);
+      });
+
+      const grandTotal = totalBiayaKamar + totalBiayaTambahan;
+
+      document.getElementById("infoJmlKamar").innerText = `${cards.length} Kamar`;
+      document.getElementById("infoDurasi").innerText = `${durasi} Malam`;
+      document.getElementById("infoTotalKamar").innerText = formatRupiah(totalBiayaKamar);
+      document.getElementById("infoTambahan").innerText = formatRupiah(totalBiayaTambahan);
+      document.getElementById("infoTotal").innerText = formatRupiah(grandTotal);
+
+      const nominalDP = Number(document.getElementById("nominalDP").value) || 0;
+      const sisa = Math.max(0, grandTotal - nominalDP);
+      document.getElementById("infoSisaTagihan").innerText = formatRupiah(sisa);
+    }
+
+    document.getElementById("guestForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      const notif = document.getElementById("notif");
+
+      btn.disabled = true;
+      btn.innerText = "Menyimpan data ke Spreadsheet...";
+      notif.className = "hidden";
+
+      const roomsData = [];
+      document.querySelectorAll(".room-card").forEach(card => {
+        let totalBed = 0;
+        let totalMeal = 0;
+        let logMalam = [];
+
+        const beds = card.querySelectorAll(".night-bed");
+        const meals = card.querySelectorAll(".night-meal");
+
+        beds.forEach((bedInput, idx) => {
+          const b = Number(bedInput.value) || 0;
+          const m = Number(meals[idx].value) || 0;
+          totalBed += b;
+          totalMeal += m;
+          if (b > 0 || m > 0) {
+            let item = [];
+            if (b > 0) item.push(`${b} Bed`);
+            if (m > 0) item.push(`${m} Makan`);
+            logMalam.push(`Mlm ${idx + 1}: ${item.join(", ")}`);
+          } else {
+            logMalam.push(`Mlm ${idx + 1}: -`);
+          }
+        });
+
+        roomsData.push({
+          noKamar: card.querySelector(".room-number").value,
+          tipeKamar: card.querySelector(".room-type").value,
+          totalExtraBed: totalBed,
+          totalExtraMeal: totalMeal,
+          rincianMalam: (totalBed === 0 && totalMeal === 0) ? "Tidak ada layanan tambahan" : logMalam.join(" | ")
+        });
+      });
+
+      const payload = {
+        namaLengkap: document.getElementById("namaLengkap").value,
+        noTelepon: document.getElementById("noTelepon").value,
+        checkIn: document.getElementById("checkIn").value,
+        checkOut: document.getElementById("checkOut").value,
+        metodePembayaran: document.getElementById("metodePembayaran").value,
+        statusPembayaran: document.getElementById("statusPembayaran").value,
+        statusTamu: document.getElementById("statusTamu").value,
+        nominalDP: Number(document.getElementById("nominalDP").value) || 0,
+        rooms: roomsData
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        notif.className = "block bg-emerald-100 text-emerald-800 border border-emerald-300 p-3.5 rounded-xl text-sm font-medium";
+        notif.innerText = `Berhasil menyimpan ${roomsData.length} kamar atas nama ${payload.namaLengkap} ke Google Sheets!`;
+        
+        document.getElementById("guestForm").reset();
+        document.getElementById("roomsContainer").innerHTML = "";
+        tambahKamar();
+        toggleKolomDP();
+      } catch (err) {
+        notif.className = "block bg-rose-100 text-rose-800 border border-rose-300 p-3.5 rounded-xl text-sm font-medium";
+        notif.innerText = "Gagal mengirim data. Pastikan koneksi internet & URL Apps Script sudah benar.";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan Data ke Google Sheets";
+      }
+    });
+
+    // Inisialisasi 1 kamar saat halaman pertama kali dibuka
+    window.addEventListener("DOMContentLoaded", () => {
+      tambahKamar();
+    });
+  </script>
+</body>
+</html>
